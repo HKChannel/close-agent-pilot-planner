@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Close-Agent Pilot Planner</title>
+<meta name="description" content="Size your first AI close-agent pilot from your own volumes and score whether an agent is ready to enter ICFR scope, based on BlackLine's Verity AI early-adopter cohort." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #F8FAFC; --surface: #FFFFFF; --ink: #0F172A; --muted: #475569; --line: #E2E8F0;
+    --cyan: #0891B2; --cyan-soft: #ECFEFF; --amber: #D97706; --amber-soft: #FFFBEB;
+    --leaf: #059669; --leaf-soft: #ECFDF5; --red: #DC2626; --red-soft: #FEF2F2;
+    --mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+    --sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0B132B; --surface: #131F3D; --ink: #F8FAFC; --muted: #A5B4CB; --line: #24345C;
+      --cyan-soft: rgba(8,145,178,.16); --amber-soft: rgba(217,119,6,.16); --leaf-soft: rgba(5,150,105,.16); --red-soft: rgba(220,38,38,.16);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  body { min-height: 100vh; }
+  .container { max-width: 1120px; margin: 0 auto; padding: 28px 16px 48px; }
+  header .eyebrow { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--cyan); }
+  header h1 { font-size: clamp(26px, 4.5vw, 38px); font-weight: 900; letter-spacing: -.03em; margin: 6px 0 8px; line-height: 1.1; }
+  header p { color: var(--muted); max-width: 780px; line-height: 1.55; font-size: 15.5px; }
+  .tabs { display: flex; gap: 8px; margin: 24px 0 18px; flex-wrap: wrap; }
+  .tab { font: 700 14px var(--sans); padding: 11px 16px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 18px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--surface); border: 1.5px solid var(--line); border-radius: 16px; padding: 18px; min-width: 0; }
+  .card h2 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+  .hint { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; font-weight: 700; margin-bottom: 6px; }
+  .field label output { font-family: var(--mono); color: var(--cyan); white-space: nowrap; }
+  .field .ceil { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  input[type="range"] { width: 100%; accent-color: var(--cyan); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  input[type="number"] { width: 100%; font: 600 14px var(--mono); padding: 9px 10px; border-radius: 9px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); }
+  .sub-l { font-size: 11.5px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: 600; }
+  .real { background: var(--amber-soft); border-radius: 12px; padding: 12px; }
+  .real label output { color: var(--amber); }
+  .row-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  button.btn { font: 700 13.5px var(--sans); padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+  button.btn.primary { background: var(--cyan); border-color: var(--cyan); color: #fff; }
+  .kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .kpi { border-radius: 12px; padding: 12px 14px; border: 1.5px solid var(--line); }
+  .kpi .lbl { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+  .kpi .val { font-family: var(--mono); font-size: 26px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .kpi .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .kpi.h { background: var(--cyan-soft); } .kpi.h .val { color: var(--cyan); }
+  .kpi.d { background: var(--leaf-soft); } .kpi.d .val { color: var(--leaf); }
+  .kpi.f { background: var(--bg); }
+  .kpi.c { background: var(--amber-soft); } .kpi.c .val { color: var(--amber); }
+  .wf { display: grid; grid-template-columns: minmax(0, 1fr) 90px; gap: 6px 12px; align-items: center; margin: 6px 0; font-size: 13.5px; }
+  .wf .name { font-weight: 700; }
+  .wf .hrs { font-family: var(--mono); text-align: right; font-weight: 700; }
+  .wf .bar { grid-column: 1 / -1; height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; position: relative; }
+  .wf .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; }
+  .wf .bar .ceilb { background: rgba(8,145,178,.25); }
+  .wf .bar .realb { background: var(--cyan); }
+  .wf.best .name::after { content: "  ← start here"; color: var(--leaf); font-weight: 800; }
+  .note { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 12px; padding: 10px 12px; border-left: 4px solid var(--line); background: var(--bg); border-radius: 0 8px 8px 0; }
+  .gate { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+  .gate h3 { font-size: 15px; font-weight: 800; }
+  .gate p { font-size: 13px; color: var(--muted); margin: 3px 0 10px; line-height: 1.45; }
+  .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .seg button { font: 700 12.5px var(--sans); padding: 9px 6px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
+  .seg button.on[data-val="0"] { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+  .seg button.on[data-val="1"] { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+  .seg button.on[data-val="2"] { background: var(--leaf-soft); border-color: var(--leaf); color: var(--leaf); }
+  .dial-wrap { text-align: center; }
+  .dial-pct { font: 700 46px var(--mono); margin-top: -64px; }
+  .band { display: inline-block; margin-top: 8px; font-weight: 800; padding: 8px 14px; border-radius: 999px; font-size: 14px; }
+  .band.b0 { background: var(--red-soft); color: var(--red); } .band.b1 { background: var(--amber-soft); color: var(--amber); } .band.b2 { background: var(--leaf-soft); color: var(--leaf); }
+  .next { text-align: left; margin-top: 16px; font-size: 13.5px; line-height: 1.55; }
+  .next li { margin: 0 0 6px 18px; }
+  .msg { font-size: 12.5px; margin-top: 8px; color: var(--muted); min-height: 18px; }
+  footer { margin-top: 32px; font-size: 12.5px; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--line); padding-top: 14px; }
+  @media print { .tabs, .row-btns { display: none; } .panel { display: block !important; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="eyebrow">COMPANION TOOL • AI IN FINANCE, DONE RIGHT • BLACKLINE VERITY AI</div>
+    <h1>Close-Agent Pilot Planner &amp; ICFR Readiness Scorer</h1>
+    <p>BlackLine's Verity AI early adopters reported big task-level gains in the close. Those are vendor-reported ceilings, so this page applies them to your own volumes, discounts them to a level you can defend, and shows which workflow to pilot first. Then it scores whether an agent is ready to enter ICFR scope.</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" id="tab-btn-1" role="tab" aria-selected="true" data-tab="1">1 · Pilot planner</button>
+    <button class="tab" id="tab-btn-2" role="tab" aria-selected="false" data-tab="2">2 · ICFR readiness</button>
+  </div>
+
+  <section class="panel active" id="panel-1">
+    <div class="grid">
+      <div class="card">
+        <h2>Your monthly close workload</h2>
+        <div class="hint">Demo figures are made up. Replace them with your own.</div>
+        <div class="field">
+          <span class="sub-l">ACCOUNT RECONCILIATIONS (Verity Prepare ceiling: -92% prep time)</span>
+          <div class="pair">
+            <div><span class="sub-l">Accounts per month</span><input type="number" id="in-accts" min="0" step="10" /></div>
+            <div><span class="sub-l">Prep hours per account</span><input type="number" id="in-acct-hrs" min="0" step="0.1" /></div>
+          </div>
+        </div>
+        <div class="field">
+          <span class="sub-l">ACCRUALS (Verity Accruals ceiling: -80% processing time)</span>
+          <div><span class="sub-l">Accrual hours per month</span><input type="number" id="in-accr" min="0" step="5" /></div>
+        </div>
+        <div class="field">
+          <span class="sub-l">MATCHING EXCEPTIONS (Verity Match ceiling: -64% residual unmatched)</span>
+          <div class="pair">
+            <div><span class="sub-l">Unmatched items per month</span><input type="number" id="in-exc" min="0" step="100" /></div>
+            <div><span class="sub-l">Minutes per item</span><input type="number" id="in-exc-min" min="0" step="1" /></div>
+          </div>
+        </div>
+        <div class="field">
+          <span class="sub-l">COLLECTIONS (Verity Collect ceiling: -99% call prep)</span>
+          <div><span class="sub-l">Call-prep hours per week</span><input type="number" id="in-coll" min="0" step="1" /></div>
+        </div>
+        <div class="field">
+          <span class="sub-l">Blended hourly cost ($)</span><input type="number" id="in-rate" min="0" step="5" />
+        </div>
+        <div class="field real">
+          <label for="in-real">Realization of vendor ceilings <output id="out-real">50%</output></label>
+          <input type="range" id="in-real" min="10" max="100" step="5" />
+          <div class="ceil">The article's test: "even half of these task-level gains changes close capacity." Keep this at 50% or lower for a budget case.</div>
+        </div>
+        <div class="row-btns"><button class="btn" id="btn-reset">Reset demo figures</button></div>
+      </div>
+      <div class="card">
+        <h2>Your pilot case</h2>
+        <div class="hint">Light bars show the vendor ceiling. Dark bars show your realization.</div>
+        <div class="kpis">
+          <div class="kpi h"><div class="lbl">Hours freed / month</div><div class="val" id="kpi-hours">–</div><div class="sub" id="kpi-ceiling">At ceiling: –</div></div>
+          <div class="kpi d"><div class="lbl">Annual value</div><div class="val" id="kpi-annual">–</div><div class="sub">Hours × 12 × hourly cost</div></div>
+          <div class="kpi f"><div class="lbl">FTE equivalent</div><div class="val" id="kpi-fte">–</div><div class="sub">At 140 hours per month</div></div>
+          <div class="kpi c"><div class="lbl">Pilot first</div><div class="val" id="kpi-best" style="font-size:19px">–</div><div class="sub">Largest realized payoff</div></div>
+        </div>
+        <div id="wf-list"></div>
+        <div class="note">Ceilings are BlackLine's vendor-reported early-adopter results for specific tasks (Aug–Nov 2026), not department-wide averages or a forecast of your results. Pilot one bounded workflow, run a parallel tie-out, and bring your external auditors in before you expand.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-2">
+    <div class="grid">
+      <div class="card">
+        <h2>6 gates before an agent enters ICFR scope</h2>
+        <div class="hint">Rate each one honestly. Partial counts as half.</div>
+        <div id="gates"></div>
+      </div>
+      <div class="card dial-wrap">
+        <h2>ICFR readiness</h2>
+        <svg viewBox="0 0 240 140" width="100%" style="max-width:320px">
+          <path d="M20 120 A100 100 0 0 1 220 120" fill="none" stroke="var(--line)" stroke-width="18" stroke-linecap="round" />
+          <path id="dial-arc" d="M20 120 A100 100 0 0 1 220 120" fill="none" stroke="var(--amber)" stroke-width="18" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" />
+        </svg>
+        <div class="dial-pct" id="sc-pct">50%</div>
+        <div class="band b1" id="sc-band">Pilot with a parallel tie-out</div>
+        <ol class="next" id="sc-next"></ol>
+        <div class="row-btns" style="justify-content:center">
+          <button class="btn primary" id="btn-copy">Copy vendor due-diligence memo</button>
+          <button class="btn" id="btn-print">Print / save PDF</button>
+        </div>
+        <div class="msg" id="copy-msg"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Built as a companion to an edition of the LinkedIn newsletter <b>AI in Finance, Done Right</b>, on BlackLine's Verity AI early-adopter cohort. Demo figures are examples; results are estimates worked out from the numbers you enter, not BlackLine figures or a forecast. Everything runs in your browser and nothing is uploaded.
+  </footer>
+</div>
+
+<script>
+(function () {
+  const DEMO = { accts: 400, acctHrs: 1.5, accr: 120, exc: 3000, excMin: 6, coll: 45, rate: 75, real: 50 };
+  const CEIL = { prep: 0.92, accr: 0.80, match: 0.64, coll: 0.99 };
+  const GATES = [
+    ['Nothing posts without controls or approval', 'No AI action reaches the GL without passing configured controls or a human approving it.'],
+    ['Immutable step-by-step log', 'Every entry keeps the agent\'s reasoning, step by step, in a log nobody can edit.'],
+    ['Independent adversarial testing', 'A third party has stress-tested the agent for hallucinations and data leakage, and retests on a schedule.'],
+    ['Agent registry with identities', 'Every agent has its own identity and permissions, so segregation of duties still holds.'],
+    ['One bounded workflow, parallel tie-out', 'The pilot covers one process, and its output is tied out against the manual result.'],
+    ['Auditors engaged, reviewers trained', 'External auditors have seen the audit trail, and staff are trained to review and reject AI drafts.']
+  ];
+  const LABELS = ['No', 'Partial', 'Yes'];
+  const $ = (id) => document.getElementById(id);
+  const num = (id) => { const v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : 0; };
+  const fmtInt = (v) => Math.round(v).toLocaleString('en-US');
+  // Round to cents first so float noise (e.g. 464872.4999…) can't flip a .50 down
+  const fmtUsd = (v) => '$' + Math.round(Number(v.toFixed(2))).toLocaleString('en-US');
+
+  function setDemo() {
+    $('in-accts').value = DEMO.accts; $('in-acct-hrs').value = DEMO.acctHrs; $('in-accr').value = DEMO.accr;
+    $('in-exc').value = DEMO.exc; $('in-exc-min').value = DEMO.excMin; $('in-coll').value = DEMO.coll;
+    $('in-rate').value = DEMO.rate; $('in-real').value = DEMO.real;
+  }
+
+  function compute() {
+    const real = num('in-real') / 100;
+    const base = {
+      prep: num('in-accts') * num('in-acct-hrs'),
+      accr: num('in-accr'),
+      match: num('in-exc') * num('in-exc-min') / 60,
+      coll: num('in-coll') * 52 / 12
+    };
+    const names = { prep: 'Account preparation', accr: 'Accruals', match: 'Transaction matching', coll: 'Collections call prep' };
+    const rows = Object.keys(base).map((k) => ({ k, name: names[k], base: base[k], ceil: base[k] * CEIL[k], realized: base[k] * CEIL[k] * real }));
+    const total = rows.reduce((s, r) => s + r.realized, 0);
+    const ceilTotal = rows.reduce((s, r) => s + r.ceil, 0);
+    const best = rows.slice().sort((a, b) => b.realized - a.realized)[0];
+    return { rows, total, ceilTotal, annual: total * 12 * num('in-rate'), fte: total / 140, best: total > 0 ? best : null, real };
+  }
+
+  function render() {
+    const r = compute();
+    $('out-real').textContent = Math.round(r.real * 100) + '%';
+    $('kpi-hours').textContent = fmtInt(r.total);
+    $('kpi-ceiling').textContent = 'At vendor ceiling: ' + fmtInt(r.ceilTotal) + ' hrs';
+    $('kpi-annual').textContent = fmtUsd(r.annual);
+    $('kpi-fte').textContent = r.fte.toFixed(1);
+    $('kpi-best').textContent = r.best ? r.best.name : '–';
+    const max = Math.max(1, ...r.rows.map((x) => x.base));
+    $('wf-list').innerHTML = r.rows.map((x) => `
+      <div class="wf ${r.best && x.k === r.best.k ? 'best' : ''}">
+        <div class="name">${x.name}</div><div class="hrs">${fmtInt(x.realized)} h</div>
+        <div class="bar"><i class="ceilb" style="width:${(x.ceil / max * 100).toFixed(1)}%"></i><i class="realb" style="width:${(x.realized / max * 100).toFixed(1)}%"></i></div>
+      </div>`).join('');
+    window.__lastPlan = r;
+  }
+
+  const gateVals = GATES.map(() => 1);
+  function renderGates() {
+    $('gates').innerHTML = GATES.map(([t, d], i) => `
+      <div class="gate"><h3>${i + 1}. ${t}</h3><p>${d}</p>
+        <div class="seg">${LABELS.map((l, v) => `<button data-idx="${i}" data-val="${v}" class="${gateVals[i] === v ? 'on' : ''}" aria-pressed="${gateVals[i] === v}">${l}</button>`).join('')}</div>
+      </div>`).join('');
+  }
+  function score() {
+    const pct = Math.round(gateVals.reduce((s, v) => s + v, 0) / (GATES.length * 2) * 100);
+    $('sc-pct').textContent = pct + '%';
+    const arc = $('dial-arc');
+    arc.setAttribute('stroke-dasharray', `${pct} 100`);
+    const band = pct >= 80 ? 2 : pct >= 50 ? 1 : 0;
+    arc.setAttribute('stroke', ['var(--red)', 'var(--amber)', 'var(--leaf)'][band]);
+    const b = $('sc-band');
+    b.className = 'band b' + band;
+    b.textContent = ['Keep it outside ICFR scope', 'Pilot with a parallel tie-out', 'Ready for a controlled ICFR pilot'][band];
+    const gaps = GATES.map((g, i) => [g[0], gateVals[i]]).filter(([, v]) => v < 2).sort((a, c) => a[1] - c[1]).slice(0, 3);
+    $('sc-next').innerHTML = gaps.length
+      ? gaps.map(([t, v]) => `<li><b>${t}</b>: ${v === 0 ? 'not in place. Fix this before the agent touches ICFR.' : 'partly there. Get evidence your auditors can test.'}</li>`).join('')
+      : '<li>All six gates are in place. Start the pilot on one workflow and keep the parallel tie-out running.</li>';
+    return pct;
+  }
+
+  function memo() {
+    const pct = score();
+    const p = window.__lastPlan;
+    const lines = [
+      'CLOSE-AGENT PILOT: VENDOR DUE-DILIGENCE MEMO', '',
+      'Ask every vendor before an agent enters ICFR scope:',
+      '1. Can the agent post to the GL without human approval?',
+      '2. Does every entry keep step-by-step reasoning in an immutable log?',
+      '3. Has the agent been independently stress-tested for hallucinations and cross-tenant data leakage?', '',
+      `ICFR readiness: ${pct}% (${$('sc-band').textContent})`,
+      ...GATES.map((g, i) => `- ${g[0]}: ${LABELS[gateVals[i]]}`), ''
+    ];
+    if (p && p.best) lines.push(
+      `Pilot case at ${Math.round(p.real * 100)}% of vendor-reported ceilings: ${fmtInt(p.total)} hours/month (${p.fte.toFixed(1)} FTE), ${fmtUsd(p.annual)}/year.`,
+      `Suggested first workflow: ${p.best.name}. Estimates only.`
+    );
+    return lines.join('\n');
+  }
+
+  function selectTab(n) {
+    [1, 2].forEach((k) => {
+      $('tab-btn-' + k).setAttribute('aria-selected', String(k === n));
+      $('panel-' + k).classList.toggle('active', k === n);
+    });
+  }
+
+  document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => selectTab(Number(b.dataset.tab))));
+  document.querySelectorAll('#panel-1 input').forEach((el) => el.addEventListener('input', render));
+  $('btn-reset').addEventListener('click', () => {
+    setDemo();
+    for (let i = 0; i < gateVals.length; i++) gateVals[i] = 1;
+    renderGates(); score(); render();
+  });
+  $('gates').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-idx]');
+    if (!btn) return;
+    gateVals[Number(btn.dataset.idx)] = Number(btn.dataset.val);
+    renderGates(); score();
+  });
+  $('btn-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(memo()); $('copy-msg').textContent = 'Memo copied to clipboard.'; }
+    catch { $('copy-msg').textContent = 'Your browser blocked the clipboard. Use Print / save PDF instead.'; }
+  });
+  $('btn-print').addEventListener('click', () => window.print());
+
+  setDemo(); renderGates(); score(); render();
+})();
+</script>
+</body>
+</html>
